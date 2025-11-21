@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Sauce Demo Test Suite" verbose="1" parallel="tests" thread-count="1">
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <test name="Sauce Demo Android Tests">
+        <parameter name="platformName" value="Android"/>
+        <parameter name="platformVersion" value="16"/>
+        <parameter name="deviceName" value="Medium_Phone_API_35"/>
+        <parameter name="appPackage" value="com.swaglabsmobileapp"/>
+        <parameter name="appActivity" value="com.swaglabsmobileapp.MainActivity"/>
+        <parameter name="noReset" value="false"/>
+        
+        <classes>
+            <class name="com.mobile.test.tests.LoginTest">
+                <methods>
+                    <include name="successfulLoginTest"/>
+                    <include name="negativeLoginTest_missingUsername"/>
+                    <include name="negativeLoginTest_missingPassword"/>
+                    <include name="logoutTest"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>
