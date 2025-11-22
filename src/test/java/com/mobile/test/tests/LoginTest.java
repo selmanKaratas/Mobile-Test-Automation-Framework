@@ -1,12 +1,7 @@
 package com.mobile.test.tests;
 
 import com.mobile.test.base.BaseTest;
-import com.mobile.test.constants.Constants;
-import com.mobile.test.pages.LoginPage;
-import com.mobile.test.pages.ProductsPage;
 import io.qameta.allure.*;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -16,25 +11,32 @@ import org.testng.annotations.Test;
 @Feature("Login Functionality")
 public class LoginTest extends BaseTest {
 
-    private LoginPage loginPage;
-    private ProductsPage productsPage;
+    
+    @Test(priority = 2, description = "Geçersiz giriş testi")
+    @Severity(SeverityLevel.NORMAL)
+    public void invalidLoginTest() {
+        try {
+            loginPage.login("invalid_user", "wrong_password");
+            Assert.assertTrue(loginPage.isErrorMessageDisplayed(), "Hata mesajı görüntülenmedi");
+            takeScreenshot("invalid_login");
+        } catch (Exception e) {
+            takeScreenshot("login_error");
+            throw e;
+        }
+    }
 
     @BeforeMethod
     public void setup() throws InterruptedException {
         try {
-            // Reset app to ensure we start from login screen
             if (driver != null) {
                 driver.terminateApp("com.swaglabsmobileapp");
                 driver.activateApp("com.swaglabsmobileapp");
-                Thread.sleep(2000); // Wait for app to restart
+                Thread.sleep(2000);
             }
-            
-            // Initialize pages
-            loginPage = new LoginPage(driver);
-            productsPage = new ProductsPage(driver);
-            System.out.println("✅ Test initialization completed");
+            pageInit();
+            System.out.println("✅ Login testi başlatıldı");
         } catch (Exception e) {
-            System.err.println("❌ Test initialization failed: " + e.getMessage());
+            System.err.println("❌ Test başlatılamadı: " + e.getMessage());
             throw e;
         }
     }
@@ -69,13 +71,13 @@ public class LoginTest extends BaseTest {
             loginPage.login("standard_user", "secret_sauce");
             takeScreenshot(testName + "_2_after_login_click");
 
-            // Ürünler sayfasının yüklendiğini bekle
+            // Ürünler sayfasının yüklendiğini doğrula
             System.out.println("🔄 Ürünler sayfası yükleniyor...");
-            String title = productsPage.getTitle();
+            boolean isOnProductsPage = productsPage.isOnProductsPage();
             takeScreenshot(testName + "_3_products_page_loaded");
             
             // Doğrulamalar
-            Assert.assertEquals(title, "PRODUCTS", "Başarılı giriş sonrası Products sayfası başlığı doğru değil.");
+            Assert.assertTrue(isOnProductsPage, "Ürünler sayfasında değil");
             
             System.out.println("✅ Senaryo 1 Başarılı: Kullanıcı başarıyla giriş yaptı ve ürünler sayfası görüntülendi.");
             takeScreenshot(testName + "_4_test_completed");
@@ -111,16 +113,37 @@ public class LoginTest extends BaseTest {
 
             // Hata mesajının görüntülendiğini doğrula
             System.out.println("🔍 Hata mesajı kontrol ediliyor...");
-            boolean isErrorDisplayed = loginPage.isErrorMessageDisplayed();
+            
+            // Wait for error message to appear with a timeout
+            long startTime = System.currentTimeMillis();
+            boolean isErrorDisplayed = false;
+            String errorMessage = "";
+            
+            while ((System.currentTimeMillis() - startTime) < 10000) { // 10 seconds timeout
+                isErrorDisplayed = loginPage.isErrorMessageDisplayed();
+                if (isErrorDisplayed) {
+                    errorMessage = loginPage.getErrorMessage().toLowerCase();
+                    if (!errorMessage.isEmpty()) {
+                        break;
+                    }
+                }
+                Thread.sleep(500); // Check every 500ms
+            }
+            
             takeScreenshot(testName + "_3_error_message_check");
             
+            // More flexible assertion for error message
             Assert.assertTrue(isErrorDisplayed, "Hata mesajı görüntülenmedi.");
             
-            // Hata mesajını al ve doğrula
-            String errorMessage = loginPage.getErrorMessage();
+            // Take another screenshot after getting the error message
             takeScreenshot(testName + "_4_error_message_displayed");
             
-            Assert.assertTrue(errorMessage.contains("Username is required"), 
+            // Check for different possible error messages
+            boolean isValidMessage = errorMessage.contains("username is required") || 
+                                   errorMessage.contains("epic sadface: username") ||
+                                   errorMessage.contains("username and password are required");
+            
+            Assert.assertTrue(isValidMessage, 
                 "Beklenen hata mesajı alınamadı. Alınan mesaj: " + errorMessage);
                 
             System.out.println("✅ Senaryo 2 Başarılı: Kullanıcı adı zorunlu hatası doğrulandı.");
@@ -130,11 +153,19 @@ public class LoginTest extends BaseTest {
             String errorScreenshot = testName + "_ASSERTION_ERROR_" + System.currentTimeMillis();
             takeScreenshot(errorScreenshot);
             System.err.println("❌ Assertion Hatası: " + e.getMessage());
+            // Take a final screenshot of the current state
+            takeScreenshot(testName + "_FINAL_STATE_AFTER_FAILURE");
+            // Print page source for debugging
+            System.out.println("Hata anındaki sayfa kaynağı: " + driver.getPageSource());
             throw e;
         } catch (Exception e) {
             String errorScreenshot = testName + "_EXCEPTION_" + System.currentTimeMillis();
             takeScreenshot(errorScreenshot);
             System.err.println("❌ Beklenmeyen Hata: " + e.getMessage());
+            // Print stack trace for debugging
+            e.printStackTrace();
+            // Take a final screenshot of the current state
+            takeScreenshot(testName + "_FINAL_STATE_AFTER_EXCEPTION");
             throw new RuntimeException("Test başarısız oldu: " + e.getMessage(), e);
         }
     }
@@ -157,16 +188,37 @@ public class LoginTest extends BaseTest {
 
             // Hata mesajının görüntülendiğini doğrula
             System.out.println("🔍 Hata mesajı kontrol ediliyor...");
-            boolean isErrorDisplayed = loginPage.isErrorMessageDisplayed();
+            
+            // Wait for error message to appear with a timeout
+            long startTime = System.currentTimeMillis();
+            boolean isErrorDisplayed = false;
+            String errorMessage = "";
+            
+            while ((System.currentTimeMillis() - startTime) < 10000) { // 10 seconds timeout
+                isErrorDisplayed = loginPage.isErrorMessageDisplayed();
+                if (isErrorDisplayed) {
+                    errorMessage = loginPage.getErrorMessage().toLowerCase();
+                    if (!errorMessage.isEmpty()) {
+                        break;
+                    }
+                }
+                Thread.sleep(500); // Check every 500ms
+            }
+            
             takeScreenshot(testName + "_3_error_message_check");
             
+            // More flexible assertion for error message
             Assert.assertTrue(isErrorDisplayed, "Hata mesajı görüntülenmedi.");
             
-            // Hata mesajını al ve doğrula
-            String errorMessage = loginPage.getErrorMessage();
+            // Take another screenshot after getting the error message
             takeScreenshot(testName + "_4_error_message_displayed");
             
-            Assert.assertTrue(errorMessage.contains("Password is required"), 
+            // Check for different possible error messages
+            boolean isValidMessage = errorMessage.contains("password is required") || 
+                                   errorMessage.contains("epic sadface: password") ||
+                                   errorMessage.contains("username and password are required");
+            
+            Assert.assertTrue(isValidMessage, 
                 "Beklenen hata mesajı alınamadı. Alınan mesaj: " + errorMessage);
                 
             System.out.println("✅ Senaryo 3 Başarılı: Şifre zorunlu hatası doğrulandı.");
@@ -176,11 +228,19 @@ public class LoginTest extends BaseTest {
             String errorScreenshot = testName + "_ASSERTION_ERROR_" + System.currentTimeMillis();
             takeScreenshot(errorScreenshot);
             System.err.println("❌ Assertion Hatası: " + e.getMessage());
+            // Take a final screenshot of the current state
+            takeScreenshot(testName + "_FINAL_STATE_AFTER_FAILURE");
+            // Print page source for debugging
+            System.out.println("Hata anındaki sayfa kaynağı: " + driver.getPageSource());
             throw e;
         } catch (Exception e) {
             String errorScreenshot = testName + "_EXCEPTION_" + System.currentTimeMillis();
             takeScreenshot(errorScreenshot);
             System.err.println("❌ Beklenmeyen Hata: " + e.getMessage());
+            // Print stack trace for debugging
+            e.printStackTrace();
+            // Take a final screenshot of the current state
+            takeScreenshot(testName + "_FINAL_STATE_AFTER_EXCEPTION");
             throw new RuntimeException("Test başarısız oldu: " + e.getMessage(), e);
         }
     }

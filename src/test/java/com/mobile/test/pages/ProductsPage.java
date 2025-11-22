@@ -8,10 +8,9 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-/**
- * Ürünler sayfası işlemlerini yöneten sayfa sınıfı
- * Page class that manages products page operations
- */
+import java.time.Duration;
+import java.util.List;
+
 public class ProductsPage extends BasePage {
 
     @AndroidFindBy(xpath = "//android.widget.TextView[@text='PRODUCTS']")
@@ -22,39 +21,47 @@ public class ProductsPage extends BasePage {
     
     @AndroidFindBy(accessibility = "test-LOGOUT")
     private WebElement logoutButton;
+    
+    @AndroidFindBy(accessibility = "test-ADD TO CART")
+    private WebElement addToCartButton;
+    
+    @AndroidFindBy(accessibility = "test-Cart")
+    private WebElement cartIcon;
+    
+    @AndroidFindBy(xpath = "//android.widget.TextView[contains(@content-desc, 'test-Item')]/..")
+    private List<WebElement> productItems;
+    
+    @AndroidFindBy(xpath = "//android.widget.TextView[contains(@content-desc, 'test-Item')]")
+    private List<WebElement> productTitles;
+    
+    @AndroidFindBy(xpath = "//android.view.ViewGroup[contains(@content-desc, 'test-ADD TO CART')]")
+    private List<WebElement> addToCartButtons;
 
     public ProductsPage(AndroidDriver driver) {
         super(driver);
-        PageFactory.initElements(new AppiumFieldDecorator(driver), this);
     }
 
-    /**
-     * Ürünler sayfası başlığını döndürür
-     * Returns the products page title
-     */
-    public String getTitle() {
-        System.out.println("Ürünler sayfası başlığı alınıyor...");
-        System.out.println("Getting products page title...");
-        return wait.until(ExpectedConditions.visibilityOf(productsTitle)).getText();
+    public boolean isOnProductsPage() {
+        return isElementDisplayed(productsTitle);
     }
-
-    /**
-     * Çıkış yapma işlemini gerçekleştirir
-     * Performs the logout operation
-     */
+    
+    public void addFirstProductToCart() {
+        if (!addToCartButtons.isEmpty()) {
+            click(addToCartButtons.get(0));
+            System.out.println("✅ İlk ürün sepete eklendi / First product added to cart");
+        } else {
+            System.out.println("❌ Sepete eklenecek ürün bulunamadı / No products found to add to cart");
+        }
+    }
+    
+    public void goToCart() {
+        click(cartIcon);
+    }
+    
     public void logout() {
-        System.out.println("Çıkış yapılıyor...");
-        System.out.println("Logging out...");
-        
-        // Menüyü aç / Open menu
         click(menuButton);
-        
-        // Çıkış yap butonuna tıkla / Click logout button
-        wait.until(ExpectedConditions.visibilityOf(logoutButton));
         click(logoutButton);
-        
-        System.out.println("Başarıyla çıkış yapıldı");
-        System.out.println("Successfully logged out");
+        System.out.println("✅ Başarıyla çıkış yapıldı / Successfully logged out");
     }
     
     /**
@@ -65,9 +72,17 @@ public class ProductsPage extends BasePage {
         try {
             System.out.println("Ürünler sayfası kontrol ediliyor...");
             System.out.println("Checking if products page is displayed...");
-            return wait.until(ExpectedConditions.visibilityOf(productsTitle)).isDisplayed();
+            boolean isDisplayed = productsTitle.isDisplayed();
+            System.out.println("Ürünler sayfası görüntülenme durumu / Products page display status: " + isDisplayed);
+            if (isDisplayed) {
+                System.out.println("Mevcut ürün sayısı / Number of products found: " + productTitles.size());
+                if (!productTitles.isEmpty()) {
+                    System.out.println("İlk ürün başlığı / First product title: " + productTitles.get(0).getText());
+                }
+            }
+            return isDisplayed;
         } catch (Exception e) {
-            System.out.println("Ürünler sayfası görüntülenemedi / Products page is not displayed");
+            System.out.println("Ürünler sayfası görüntülenemedi / Products page is not displayed: " + e.getMessage());
             return false;
         }
     }

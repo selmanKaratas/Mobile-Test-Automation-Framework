@@ -21,10 +21,20 @@ public class WaitHelper {
         return new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
                 .until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
+    
+    public WebElement waitForElementToBeVisible(WebElement element) {
+        return new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
+                .until(ExpectedConditions.visibilityOf(element));
+    }
 
     public WebElement waitForElementToBeClickable(By locator) {
         return new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
                 .until(ExpectedConditions.elementToBeClickable(locator));
+    }
+    
+    public WebElement waitForElementToBeClickable(WebElement element) {
+        return new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds))
+                .until(ExpectedConditions.elementToBeClickable(element));
     }
 
     public boolean waitForElementToBeInvisible(By locator) {

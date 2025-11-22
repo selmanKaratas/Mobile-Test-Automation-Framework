@@ -188,24 +188,4 @@ public class SettingsPage extends BasePage {
             throw e;
         }
     }
-    
-    private void scrollToElement(WebElement element) {
-        try {
-            // Simple scroll to element using TouchAction
-            int elementY = element.getLocation().getY();
-            int screenHeight = driver.manage().window().getSize().getHeight();
-            
-            // If element is not in the visible area, scroll to it
-            if (elementY > screenHeight) {
-                System.out.println(TAG + "Scrolling to element at Y: " + elementY);
-                // Scroll to the element
-                driver.executeScript("mobile: scroll", 
-                    ImmutableMap.of("elementId", ((RemoteWebElement) element).getId(), 
-                                 "direction", "down"));
-            }
-        } catch (Exception e) {
-            System.err.println(TAG + "Could not scroll to element: " + e.getMessage());
-            // Continue even if scroll fails
-        }
-    }
 }

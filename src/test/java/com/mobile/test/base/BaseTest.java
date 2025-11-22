@@ -1,27 +1,23 @@
 package com.mobile.test.base;
 
 import com.mobile.test.constants.Constants;
+import com.mobile.test.pages.*;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import io.appium.java_client.pagefactory.AppiumFieldDecorator;
+import io.qameta.allure.Attachment;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.annotations.*;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import io.qameta.allure.Attachment;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
-
-import io.qameta.allure.Attachment;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.AfterSuite;
-import com.mobile.test.pages.LoginPage;
-import com.mobile.test.pages.ProductsPage;
 
 /**
  * Tüm test sınıflarının türeyeceği temel test sınıfı
@@ -32,6 +28,8 @@ public class BaseTest {
     protected static WebDriverWait wait;
     protected LoginPage loginPage;
     protected ProductsPage productsPage;
+    protected CartPage cartPage;
+    protected CheckoutPage checkoutPage;
     private static final String APP_PACKAGE = "com.swaglabsmobileapp";
     private static final String MAIN_ACTIVITY = "com.swaglabsmobileapp.MainActivity";
 
@@ -122,11 +120,23 @@ public class BaseTest {
         }
     }
 
+    protected void pageInit() {
+        loginPage = new LoginPage(driver);
+        productsPage = new ProductsPage(driver);
+        cartPage = new CartPage(driver);
+        checkoutPage = new CheckoutPage(driver);
+        
+        // Initialize PageFactory elements
+        PageFactory.initElements(new AppiumFieldDecorator(driver), loginPage);
+        PageFactory.initElements(new AppiumFieldDecorator(driver), productsPage);
+        PageFactory.initElements(new AppiumFieldDecorator(driver), cartPage);
+        PageFactory.initElements(new AppiumFieldDecorator(driver), checkoutPage);
+    }
+
     @AfterSuite(alwaysRun = true)
     public static void globalTearDown() {
         if (driver != null) {
             try {
-                // Test sonunda bir ekran görüntüsü al
                 if (driver.getSessionId() != null) {
                     takeScreenshot("Test_Suite_End_" + System.currentTimeMillis());
                 }
